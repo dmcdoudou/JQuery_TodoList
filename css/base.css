@@ -112,6 +112,21 @@ button {
 	background: #ddd;
 }
 
+.task-item.completed {
+	color: #aaa;
+	opacity: 0.4;
+}
+.task-item.completed:after {
+	content: "";
+	display: block;
+	width: 97%;
+	height: 1px;
+	background-color: #aaa;
+	position: relative;
+	bottom: 9px;
+	float: right;
+}
+
 .task-detail,.task-detail-mask {
 	position: absolute;
 	display: none;

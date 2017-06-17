@@ -11,6 +11,7 @@
 		,$update_form
 		,$task_detail_content
 		,$task_detail_content_input
+		,$checkbox_complete
 		;
 
 	init();	
@@ -42,6 +43,24 @@
 		})
 	}
 
+	/*监听完成Task事件*/
+	function listen_checkbox_complete() {
+		$checkbox_complete.on('click',function() {
+			//console.log($(this).is(':checked'));
+			var $this = $(this);
+			var index = $this.parent().parent().data('index');
+			var item = get(index);
+			if (item.complete)
+				update_task(index,{complete: false});
+			else
+				update_task(index,{complete: true});
+		})
+	}
+
+	function get(index) {
+		return store.get('task_list')[index];
+	}
+
 	/*查看Task详情*/
 	function show_task_detail(index) {
 		render_task_detail(index);
@@ -54,7 +73,9 @@
 	function update_task(index,data) {
 		if (index === undefined || !task_list[index]) return;
 
-		task_list[index] = data;
+		//data是一个对象，数组合并使用$.merge()，对象合并使用extend
+		//{}空数据,task_list[index]旧数据,data新数据
+		task_list[index] = $.extend({},task_list[index],data);
 		//console.log(store.get('task_list')[index]);
 		refresh_task_list();
 	}
@@ -161,9 +182,22 @@
 	function render_task_list() {
 		var $task_list = $('.task-list');
 		$task_list.html('');
+		var complete_items = [];
 		for(var i = 0; i < task_list.length; i++) {
-			var $task = render_task_item(task_list[i],i);
+			var item = task_list[i];
+			if (item && item.complete)
+				complete_items[i] = item;
+			//这里不用compleye_items.push(item);要维护task_list里的i
+			else
+				var $task = render_task_item(item,i);
 			$task_list.prepend($task);
+		}
+
+		for(var j = 0;j < complete_items.length;j++) {
+			$task = render_task_item(complete_items[j],j);
+			if (!$task) continue;
+			$task.addClass('completed');
+			$task_list.append($task);
 		}
 
 		$task_delete_trigger = $('.action.delete');
@@ -171,6 +205,9 @@
 
 		$task_detail_trigger = $('.action.detail');
 		listen_task_detail();
+
+		$checkbox_complete = $('.task-list .complete');
+		listen_checkbox_complete();
 	}
 
 	/*
@@ -180,7 +217,7 @@
 		if (!data || !index) return;
 		var list_item_tpl =			
 			'<div class="task-item" data-index="'+index+'">'+
-			'<span><input type="checkbox"></span>'+
+			'<span><input class="complete" '+(data.complete ? 'checked' : '')+' type="checkbox"></span>'+
 			'<span class="task-content">'+data.content+'</span>'+
 			'<span class="fr">'+
 			'<span class="action delete">'+' 删除'+'</span>'+
