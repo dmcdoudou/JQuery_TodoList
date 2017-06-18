@@ -12,12 +12,23 @@
 		,$task_detail_content
 		,$task_detail_content_input
 		,$checkbox_complete
+		,$task_item
+		,$msg = $('.msg')
+		,$msg_content = $msg.find('.msg-content')
+		,$msg_confirm = $msg.find('.confirmed')
+		,$alerter = $('.alerter');
 		;
 
 	init();	
 
 	$form_add_task.on('submit',on_add_task_form_submit);	
 	$task_detail_mask.on('click',hide_task_detail);
+
+	function listen_msg_event() {
+		$msg_confirm.on('click',function() {
+			hide_msg();
+		})
+	}
 
 	function on_add_task_form_submit(e) {
 		var new_task = {};
@@ -41,7 +52,13 @@
 			var index = $item.data('index');
 			show_task_detail(index);
 		})
+		$task_item.on('dblclick',function() {
+			var index = $(this).data('index');
+			show_task_detail(index);
+		})	
 	}
+
+	/**/
 
 	/*监听完成Task事件*/
 	function listen_checkbox_complete() {
@@ -103,13 +120,17 @@
 			'</div>'+
 			'</div>'+
 			'<div class="remind">'+
-			'<input name="remind_date" type="date" value="'+(item.remind_date||'')+'">'+
+			'<label>提醒时间</label>'+			
+			'<input class="datetime" name="remind_date" type="text" autocomplete="off" value="'+(item.remind_date||'')+'">'+
 			'</div>'+	
 			'<div><button type="submit">更新</button></div>'+
 			'</form>';
 
+		/*用新模板替换旧模板*/
 		$task_detail.html(null);
 		$task_detail.html(tpl);
+		$('.datetime').datetimepicker();
+		/*选中其中的form元素，因为之后会使用其监听submit事件*/
 		$update_form = $task_detail.find('form');
 		$task_detail_content = $update_form.find('.content');
 		$task_detail_content_input = $update_form.find('[name=content]');
@@ -174,6 +195,39 @@
 		//task_list是全局对象
 		task_list = store.get('task_list') || [];
 		if (task_list.length) render_task_list();
+		task_remind_check();
+		listen_msg_event();
+	}
+
+	function task_remind_check() {
+		var current_timestamp,
+				task_timestamp;
+		var itl = setInterval(function() {
+			for(var i = 0; i < task_list.length; i++ ) {
+				var item = get(i);
+				if (!item || !item.remind_date || item.informed) 
+					continue;
+
+				current_timestamp = (new Date()).getTime();
+				task_timestamp = (new Date(item.remind_date)).getTime();
+				if (current_timestamp - task_timestamp >= 1) {
+					/*提醒过一次就不会再提醒*/
+					update_task(i, {informed: true});
+					show_msg(item.content);
+				}		
+			}			
+		},300);
+	}
+
+	function show_msg(msg) {
+		if (!msg) return;
+		$msg_content.html(msg);
+		$alerter.get(0).play();
+		$msg.show();
+	}
+
+	function hide_msg() {
+		$msg.hide();
 	}
 
 	/*
@@ -204,6 +258,7 @@
 		listen_task_delete();
 
 		$task_detail_trigger = $('.action.detail');
+		$task_item = $('.task-item');
 		listen_task_detail();
 
 		$checkbox_complete = $('.task-list .complete');

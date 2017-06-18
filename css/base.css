@@ -105,7 +105,11 @@ button {
 	color: #333;
 	margin-bottom: 2px;
 	border-radius: 3px;
-	cursor: pointer;		
+	cursor: pointer;
+	-webkit-user-select:none;
+		 -moz-user-select:none;
+	     -o-user-select:none;
+	        user-select:none;		
 }
 
 .task-item:hover {
@@ -138,6 +142,7 @@ button {
 	width: 50%;
 	height: 100%;
 	padding: 10px;
+	overflow: auto;
 	border-radius: 3px 0 0 3px;
 	bottom: 0;
 	right: 0;
@@ -181,4 +186,21 @@ button {
 
 .task-content {
 	margin-left: 10px;
+}
+
+.msg {
+	display: none;
+	text-align: center;
+	background-color: #ffe264;
+	padding: 10px;
+	color: #333;
+}
+
+.anchor {
+	cursor: pointer;
+}
+
+.alerter {
+	width: 0;
+	height: 0;
 }
