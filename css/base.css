@@ -85,8 +85,12 @@ button {
 	margin-right: 1%;
 }
 
-.add-task [type=submit] {
+button.primary,
+[type=submit] {
 	background: #46b1e4;
+}
+
+.add-task [type=submit] {	
 	width: 15%;
 }
 

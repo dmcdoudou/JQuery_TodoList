@@ -2,6 +2,8 @@
 	"use strict";
 	
 	var $form_add_task = $('.add-task')
+		,$window = $(window)
+		,$body = $('body')
 		,$task_delete_trigger
 		,$task_detail_trigger
 		,$task_detail = $('.task-detail')
@@ -23,6 +25,137 @@
 
 	$form_add_task.on('submit',on_add_task_form_submit);	
 	$task_detail_mask.on('click',hide_task_detail);
+
+	function pop(arg) {
+		if (!arg) {
+			console.error('pop title is required');
+		}
+
+		var conf = {}
+			, $box
+			, $mask
+			, $title
+			, $content
+			, $confirm
+			, $cancel
+			, timer			
+			, dfd
+			, confirmed
+			;
+
+		//返回一个defered对象
+		dfd = $.Deferred();
+		//dfd.resolve();
+		//dfd.promise();
+
+		//定义标题
+		if (typeof arg == 'string')
+			conf.title = arg;
+		else
+			/*conf是旧值*/
+			conf = $.extend(conf,arg);
+
+		$box = $('<div>'+
+			'<div class="pop-title">'+conf.title+'</div>'+
+			'<div class="pop-content">'+
+			'<div>'+
+			'<button style="margin-right: 8px;" class="primary confirm">确定</button>'+
+			'<button class="cancel">取消</button>'+
+			'</div>'+
+			'</div>')
+			.css({
+				position: 'fixed',
+				color: '#444',
+				width: 300,
+				height: 'auto',
+				padding: '23px 10px',
+				background: '#fff',
+				'border-radius': '3px',
+				'-webkit-box-shadow': '0 1px 2px rgba(0,0,0,.5)',
+	   			 '-moz-box-shadow': '0 1px 2px rgba(0,0,0,.5)',
+	              'box-shadow': '0 1px 2px rgba(0,0,0,.5)'
+			})
+
+		$title = $box.find('.pop-title').css({
+			padding: '5px 10px',
+			'font-weight': 900,
+			'font-size': 20,
+			'text-align': 'center'
+
+		})	
+
+		$content = $box.find('.pop-content').css({
+			padding: '5px 10px',
+			'text-align': 'center'
+		})
+
+		$confirm = $content.find('button.confirm');
+		$cancel = $content.find('button.cancel');
+
+    $mask = $('<div></div>')
+    	.css({
+    		position: 'fixed',
+    		top: 0,
+    		bottom: 0,
+    		left: 0,
+    		right: 0,
+    		'background-color': 'rgba(0,0,0,.5)'
+    	})
+
+    timer = setInterval(function() {
+    	if (confirmed !== undefined) {
+    		dfd.resolve(confirmed);
+    		clearInterval(timer);
+    		dismiss_pop();
+    	}
+    },50)
+
+    //这步操作是异步的，用户何时点击是不清楚的	
+ 		$confirm.on('click',on_confirm)	   	
+
+ 		$cancel.on('click',on_cancel);	 
+		$mask.on('click',on_cancel);
+
+		function on_confirm() {
+ 			confirmed = true;
+ 		}
+
+		function on_cancel() {
+ 			confirmed = false;
+		}
+
+ 		function dismiss_pop() {
+ 			$mask.remove();
+ 			$box.remove();
+ 		} 		
+		
+		function adjust_box_position() {
+			var window_width = $window.width()
+				, window_height = $window.height()
+				, box_width = $box.width()
+				, box_height = $box.height()
+				, move_x
+				, move_y
+				;
+			
+			move_x = (window_width - box_width)/2;
+			move_y = (window_height - box_height)/2 - 50;
+
+			$box.css({
+				left: move_x,
+				top: move_y
+			})
+		}
+
+		$window.on('resize',function() {
+			adjust_box_position();
+		})
+
+    $mask.appendTo($body);
+		$box.appendTo($body);
+		$window.resize();
+		return dfd.promise();
+	}
 
 	function listen_msg_event() {
 		$msg_confirm.on('click',function() {
@@ -160,8 +293,12 @@
 			var $item = $this.parent().parent();
 			var index = $item.data('index');
 			/*确认删除*/
-			var tmp = confirm('确认删除？');
-			tmp ? delete_task(index) : null;
+			pop('确定要删除吗？')
+				.then(function (r) {
+					//r代表resolve传过来的参数
+					r ? delete_task(index) : null;
+				});
+			
 		})
 	}
 
